@@ -6,13 +6,16 @@ Defines the set of symbols used in text input to the model.
 The default is a set of ASCII characters that works well for English or text that has been run through Unidecode. For other data, you can modify _characters. See TRAINING_DATA.md for details. '''
 from models.audio.tts.tacotron2.text import cmudict
 
-_pad        = '_'
+_pad = '_'
 _punctuation = '!\'(),.:;? '
 _special = '-'
-_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
-# Prepend "@" to ARPAbet symbols to ensure uniqueness (some are the same as uppercase letters):
-_arpabet = ['@' + s for s in cmudict.valid_symbols]
+# Devanagari Unicode block: U+0900 to U+097F
+# Hindi vowels + consonants (core set)
+_letters = 'ऀँंःऄअआइईउऊऋॠऌॡएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक्षत्रज्ञ'
 
-# Export all symbols:
+# No ARPAbet needed for Hindi
+_arpabet = []
+
+# Combine all
 symbols = [_pad] + list(_special) + list(_punctuation) + list(_letters) + _arpabet
