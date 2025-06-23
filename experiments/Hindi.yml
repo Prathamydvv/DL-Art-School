@@ -1,0 +1,140 @@
+name: Hindi
+model: extensibletrainer
+scale: 1
+gpu_ids: [0] # <-- unless you have multiple gpus, use this
+start_step: 0 # -1 causes 0.pth to be saved!
+checkpointing_enabled: true  # <-- Gradient checkpointing. Enable for huge GPU memory savings. Disable for distributed training.
+fp16: false # TODO: why does enabling this with 8bit slow down perf??
+use_8bit: true
+wandb: false  # <-- enable to log to wandb. tensorboard logging is always enabled.
+use_tb_logger: true
+datasets:
+  train:
+    name: hindi_train_dataset
+    n_workers: 4
+    batch_size: 16  # ✅ Smaller batch size to fit ~12GB VRAM
+    mode: paired_voice_audio
+    path: ./hindi_dataset/train.txt
+    fetcher_mode: ['lj']  # ✅ Format of your dataset: "wavs/utt_0001.wav|text"
+    phase: train
+    max_wav_length: 255995
+    max_text_length: 200
+    sample_rate: 22050
+    load_conditioning: True
+    num_conditioning_candidates: 2
+    conditioning_length: 44000
+    use_bpe_tokenizer: True
+    load_aligned_codes: False
+    tokenizer_vocab: ./custom_hindi_tokenizer.json
+
+  val:
+    name: hindi_val_dataset
+    n_workers: 1
+    batch_size: 8
+    mode: paired_voice_audio
+    path: ./hindi_dataset/val.txt
+    fetcher_mode: ['lj']
+    phase: val
+    max_wav_length: 255995
+    max_text_length: 200
+    sample_rate: 22050
+    load_conditioning: True
+    num_conditioning_candidates: 2
+    conditioning_length: 44000
+    use_bpe_tokenizer: True
+    load_aligned_codes: False
+    tokenizer_vocab: ./custom_hindi_tokenizer.json
+
+steps:        
+  gpt_train:
+    training: gpt
+    loss_log_buffer: 500
+    optimizer: adamw
+    optimizer_params:
+      lr: !!float 1e-5
+      weight_decay: !!float 1e-2
+      beta1: 0.9
+      beta2: 0.96
+    clip_grad_eps: 4
+
+    injectors:
+      paired_to_mel:
+        type: torch_mel_spectrogram
+        mel_norm_file: ./experiments/clips_mel_norms.pth
+        in: wav
+        out: paired_mel
+      paired_cond_to_mel:
+        type: for_each
+        subtype: torch_mel_spectrogram
+        mel_norm_file: ./experiments/clips_mel_norms.pth
+        in: conditioning
+        out: paired_conditioning_mel
+      to_codes:
+        type: discrete_token
+        in: paired_mel
+        out: paired_mel_codes
+        dvae_config: ./experiments/train_diffusion_vocoder_22k_level.yml
+      paired_fwd_text:
+        type: generator
+        generator: gpt
+        in: [paired_conditioning_mel, padded_text, text_lengths, paired_mel_codes, wav_lengths]
+        out: [loss_text_ce, loss_mel_ce, logits]      
+
+    losses:
+      text_ce:
+        type: direct
+        weight: 0.01
+        key: loss_text_ce
+      mel_ce:
+        type: direct
+        weight: 1
+        key: loss_mel_ce
+
+networks:
+  gpt:
+    type: generator 
+    which_model_G: unified_voice2
+    kwargs:
+      layers: 12  # ✅ reduced from 30 to fit 12GB
+      model_dim: 768
+      heads: 8
+      max_text_tokens: 402
+      max_mel_tokens: 604
+      max_conditioning_inputs: 2
+      mel_length_compression: 1024
+      number_text_tokens: 256
+      number_mel_codes: 8194
+      start_mel_token: 8192
+      stop_mel_token: 8193
+      start_text_token: 255
+      train_solo_embeddings: False
+      use_mel_codes_as_input: True
+      checkpointing: True
+      tortoise_compat: True
+
+path:
+  pretrain_model_gpt: ./experiments/autoregressive.pth
+  strict_load: true
+
+train:
+  niter: 5000
+  warmup_iter: -1
+  mega_batch_factor: 4
+  val_freq: 500
+
+  default_lr_scheme: MultiStepLR
+  gen_lr_steps: [500, 1000, 1400, 1800]
+  lr_gamma: 0.5
+  ema_enabled: false
+
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  visuals: [gen, mel]
+  visual_debug_rate: 500
+  is_mel_spectrogram: true
+  disable_state_saving: true
+
+upgrades:
+  number_of_checkpoints_to_save: 1
+  number_of_states_to_save: 1
