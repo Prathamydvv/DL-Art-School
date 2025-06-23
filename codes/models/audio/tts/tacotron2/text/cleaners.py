@@ -80,12 +80,21 @@ def transliteration_cleaners(text):
   return text
 
 
-def english_cleaners(text):
-  '''Pipeline for English text, including number and abbreviation expansion.'''
-  text = convert_to_ascii(text)
-  text = lowercase(text)
-  text = expand_numbers(text)
-  text = expand_abbreviations(text)
-  text = collapse_whitespace(text)
-  text = text.replace('"', '')
-  return text
+def hindi_cleaners(text):
+    '''Cleaner pipeline for Hindi text'''
+    import re
+
+    # Convert to lowercase (Devanagari has no case, but safe to normalize)
+    text = text.lower()
+
+    # Remove punctuation and non-Devanagari characters
+    text = re.sub(r"[^\u0900-\u097F\s]", "", text)
+
+    # Collapse multiple spaces into one
+    text = re.sub(r"\s+", " ", text).strip()
+
+    # Remove double quotes (optional)
+    text = text.replace('"', '')
+
+    return text
+
