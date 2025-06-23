@@ -165,4 +165,4 @@ tortoise-tts-fast/
 archive
 NOTES_unredacted.md
 pyfastmp3decoder/
-
+!experiments/Hindi.yml
