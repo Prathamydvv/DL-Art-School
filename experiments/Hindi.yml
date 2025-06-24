@@ -95,8 +95,8 @@ networks:
     type: generator 
     which_model_G: unified_voice2
     kwargs:
-      layers: 12  # ✅ reduced from 30 to fit 12GB
-      model_dim: 768
+      layers: 30  # ✅ reduced from 30 to fit 12GB
+      model_dim: 1024
       heads: 8
       max_text_tokens: 402
       max_mel_tokens: 604
@@ -129,7 +129,7 @@ train:
 
 logger:
   print_freq: 100
-  save_checkpoint_freq: 1000
+  save_checkpoint_freq: 500
   visuals: [gen, mel]
   visual_debug_rate: 500
   is_mel_spectrogram: true
