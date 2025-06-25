@@ -80,7 +80,7 @@ def transliteration_cleaners(text):
   return text
 
 
-def hindi_cleaners(text):
+def english_cleaners(text):
     '''Cleaner pipeline for Hindi text'''
     import re
 
