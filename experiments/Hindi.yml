@@ -14,7 +14,7 @@ datasets:
     n_workers: 4
     batch_size: 16  # ✅ Smaller batch size to fit ~12GB VRAM
     mode: paired_voice_audio
-    path: ./hindi_dataset/train.txt
+    path: ../hindi-dataset/train.txt
     fetcher_mode: ['lj']  # ✅ Format of your dataset: "wavs/utt_0001.wav|text"
     phase: train
     max_wav_length: 255995
@@ -25,14 +25,14 @@ datasets:
     conditioning_length: 44000
     use_bpe_tokenizer: True
     load_aligned_codes: False
-    tokenizer_vocab: ./custom_hindi_tokenizer.json
+    tokenizer_vocab: ../custom_hindi_tokenizer.json
 
   val:
     name: hindi_val_dataset
     n_workers: 1
     batch_size: 8
     mode: paired_voice_audio
-    path: ./hindi_dataset/val.txt
+    path: "../hindi-dataset/val.txt"
     fetcher_mode: ['lj']
     phase: val
     max_wav_length: 255995
@@ -43,7 +43,7 @@ datasets:
     conditioning_length: 44000
     use_bpe_tokenizer: True
     load_aligned_codes: False
-    tokenizer_vocab: ./custom_hindi_tokenizer.json
+    tokenizer_vocab: ../custom_hindi_tokenizer.json
 
 steps:        
   gpt_train:
@@ -129,12 +129,12 @@ train:
 
 logger:
   print_freq: 100
-  save_checkpoint_freq: 500
+  save_checkpoint_freq: 200
   visuals: [gen, mel]
   visual_debug_rate: 500
   is_mel_spectrogram: true
   disable_state_saving: true
 
 upgrades:
-  number_of_checkpoints_to_save: 1
-  number_of_states_to_save: 1
+  number_of_checkpoints_to_save: 3
+  number_of_states_to_save: 3
